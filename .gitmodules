@@ -1,0 +1,3 @@
+[submodule "natural-questions"]
+	path = natural-questions
+	url = https://github.com/google-research-datasets/natural-questions.git
