@@ -1,6 +1,7 @@
 from .bert_utils import *
 import os
 from .tokenization import *
+from tqdm import tqdm
 
 
 
@@ -21,7 +22,7 @@ def preprocess(dataset, outfile, vocab):
     n_examples = 0
     for examples in nq_examples_iter(input_file=dataset, 
                                         is_training=False,
-                                        tqdm=None):
+                                        tqdm=tqdm):
         for example in examples:
             n_examples += convert(example)
 

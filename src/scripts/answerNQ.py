@@ -32,11 +32,14 @@ def create_name(name, ext=''):
 
 
 parser = argparse.ArgumentParser(description='Answers question after analyzing the text')
-parser.add_argument('--model', type=str, help='Dir with model maker and bin file')
+parser.add_argument('--run_id', type=str, help='Unique id for current run')
+parser.add_argument('--model', type=str, help='Name of the model')
 parser.add_argument('--data', type=str, help='Jsonl file to measure quality and performance')
 parser.add_argument('--use_feats', type=str, default='', help='Path to existing features')
 parser.add_argument('--outdir', type=str, default='/home/bsucm/NQ/data/outputs/')
 args = parser.parse_args()
+
+run_name = args.run_id + '_' + args.model
 
 model_pack = 'models.' + args.model
 model = importlib.import_module('.model', model_pack)
@@ -51,9 +54,8 @@ cpkt.restore(model_path + 'model_cpkt-1').assert_consumed()
 
 # Data preprocessing
 if not args.use_feats:
-    feat_records = args.outdir + args.model
 
-    feat_records = create_name(feat_records, 'tfrecords')
+    feat_records = args.outdir + run_name + '.tfrecords'
 
     if gpu:
         with tf.device('/GPU:0',):
@@ -76,7 +78,7 @@ else:
     result = curr_model.predict_generator(ds,verbose=1)
 
 
-np.savez_compressed(create_name(args.outdir + args.model + '-output') + '.npz',
+np.savez_compressed(args.outdir + run_name + '-output' + '.npz',
                     **dict(zip(['uniqe_id','start_logits','end_logits','answer_type_logits'],
                                result)))
 
@@ -109,7 +111,7 @@ predictions_json = {"predictions": list(nq_pred_dict.values())}
 
 print ("writing json")
 
-with tf.io.gfile.GFile(create_name(args.outdir +  args.model + '_predictions', 'json'), "w") as f:
+with tf.io.gfile.GFile(args.outdir +  run_name + '_predictions' + '.json', "w") as f:
     json.dump(predictions_json, f, indent=4)
 print('done!')
 
