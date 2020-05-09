@@ -316,7 +316,7 @@ class BertModel(tf.keras.layers.Layer):
   ```
   """
 
-  def __init__(self, config, float_type=tf.float32, **kwargs):
+  def __init__(self, config, float_type=tf.float16, **kwargs):
     super(BertModel, self).__init__(**kwargs)
     self.config = (
         BertConfig.from_dict(config)
@@ -930,6 +930,7 @@ class TransformerBlock(tf.keras.layers.Layer):
     self.output_dense = Dense2DProjection(
         output_size=self.hidden_size,
         kernel_initializer=get_initializer(self.initializer_range),
+        fp32_activation=True,
         name="output")
     self.output_dropout = tf.keras.layers.Dropout(rate=self.hidden_dropout_prob)
     self.output_layer_norm = tf.keras.layers.LayerNormalization(
