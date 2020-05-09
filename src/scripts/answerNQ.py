@@ -1,9 +1,16 @@
 import numpy as np 
-import pandas as pd 
 import tensorflow as tf
 import sys
 import importlib
-import collections
+import subprocess
+
+import json
+import argparse
+import os
+import re
+
+import mlflow
+import time
 
 sys.path.append('/home/bsucm/NQ/')
 
@@ -13,11 +20,9 @@ import src.utils.modeling as modeling
 import src.utils.tokenization as tokenization
 from src.utils.preprocessing import preprocess
 
-import json
-import argparse
-import os
 
 MODELS_DIR = '/home/bsucm/NQ/models/'
+NQ_EVAL = '/home/bsucm/NQ/src/scripts/nq_eval.py' 
 
 def create_name(name, ext=''):
 
@@ -47,6 +52,12 @@ model_path = MODELS_DIR + args.model + '/'
 
 gpu = bool(tf.config.experimental.list_physical_devices('GPU'))
 
+mlflow.start_run(run_name=run_name)
+
+mlflow.log_param('gpu', gpu)
+mlflow.log_param('model', args.model)
+mlflow.log_param('data', args.data)
+
 # Loading model
 curr_model = model.mk_model()
 cpkt = tf.train.Checkpoint(model=curr_model)
@@ -71,12 +82,14 @@ token_map_ds = raw_ds.map(decode_tokens)
 decoded_ds = raw_ds.map(decode_record)
 ds = decoded_ds.batch(batch_size=32, drop_remainder=False) 
 
+start = time.time()
 if gpu:
     with tf.device('/GPU:0',):
         result = curr_model.predict_generator(ds,verbose=1)
 else:
     result = curr_model.predict_generator(ds,verbose=1)
 
+mlflow.log_metric('prediction_time', time.time()- start)
 
 np.savez_compressed(args.outdir + run_name + '-output' + '.npz',
                     **dict(zip(['uniqe_id','start_logits','end_logits','answer_type_logits'],
@@ -111,8 +124,21 @@ predictions_json = {"predictions": list(nq_pred_dict.values())}
 
 print ("writing json")
 
-with tf.io.gfile.GFile(args.outdir +  run_name + '_predictions' + '.json', "w") as f:
+prediction_name = args.outdir +  run_name + '_predictions' + '.json'
+
+with tf.io.gfile.GFile(prediction_name, "w") as f:
     json.dump(predictions_json, f, indent=4)
 print('done!')
+print('Evaluating...')
 
+nq_eval_command = f'python3 {NQ_EVAL} --gold_path {args.data} --predictions_path {prediction_name}'
+
+eval_results = subprocess.check_output(nq_eval_command, shell=True, stderr=subprocess.STDOUT)
+eval_results = json.loads(re.sub('>=', '-noless-', re.findall('\{.*\}', eval_results.decode('utf-8'))[0]))
+
+mlflow.log_metrics(eval_results)
+mlflow.log_artifact(prediction_name)
+mlflow.end_run()
+
+print(eval_results)
 
