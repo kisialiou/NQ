@@ -290,6 +290,7 @@ def compute_final_f1(long_answer_stats, short_answer_stats):
   """
   scores = compute_f1(long_answer_stats, prefix='long-answer-')
   scores.update(compute_f1(short_answer_stats, prefix='short-answer-'))
+  scores.update(compute_f1(long_answer_stats + short_answer_stats, prefix='all-answer-'))
   return scores
 
 
@@ -455,9 +456,10 @@ def main(_):
         scores['short-answer-f1'], scores['short-answer-precision'],
         scores['short-answer-recall']))
   else:
-    metrics = get_metrics_with_answer_stats(long_answer_stats,
-                                            short_answer_stats)
-    print(json.dumps(metrics))
+    # metrics = get_metrics_with_answer_stats(long_answer_stats,
+                                            # short_answer_stats)
+    scores = compute_final_f1(long_answer_stats, short_answer_stats)
+    print(json.dumps(scores))
 
 
 if __name__ == '__main__':
