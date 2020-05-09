@@ -209,27 +209,19 @@ def compute_predictions(example):
         "long_answer_score": long_span.score
        }
 
-    # selecting suitable short spans
+    # selecting suitable short span
     # heuristic is taken from notebook
     summary.predicted_label["short_answers"] = []
     short_answers_score = 0
-    for short_ans in short_spans:
-        if short_ans.score > 8:
-            short_answers_score += short_ans.score
-            summary.predicted_label["short_answers"].append( 
+    short_span = max(short_spans, key = lambda span: span.score)
+    short_span = short_span if short_span.score > 8 else default_span
+    summary.predicted_label["short_answers"].append( 
                 {
                     "start_byte": -1, "end_byte": -1,
-                    "start_token":short_ans.start_token_idx,
-                    "end_token":short_ans.end_token_idx
+                    "start_token":short_span.start_token_idx,
+                    "end_token":short_span.end_token_idx
                 })
-    if not summary.predicted_label["short_answers"]:
-        summary.predicted_label["short_answers"].append(
-               {
-                    "start_byte": -1, "end_byte": -1,
-                    "start_token":-1,
-                    "end_token":-1
-                })
-    summary.predicted_label["short_answers_score"] = short_answers_score / len(summary.predicted_label["short_answers"])
+    summary.predicted_label["short_answers_score"] = short_span.score
     summary.predicted_label["yes_no_answer"] = "NONE"
     
     return summary
