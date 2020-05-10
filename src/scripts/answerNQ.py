@@ -41,6 +41,7 @@ parser.add_argument('--run_id', type=str, help='Unique id for current run')
 parser.add_argument('--model', type=str, help='Name of the model')
 parser.add_argument('--data', type=str, help='Jsonl file to measure quality and performance')
 parser.add_argument('--use_feats', type=str, default='', help='Path to existing features')
+parser.add_argument('--no_track', default=False, action='store_true')
 parser.add_argument('--outdir', type=str, default='/home/bsucm/NQ/data/outputs/')
 args = parser.parse_args()
 
@@ -52,11 +53,13 @@ model_path = MODELS_DIR + args.model + '/'
 
 gpu = bool(tf.config.experimental.list_physical_devices('GPU'))
 
-mlflow.start_run(run_name=run_name)
+if not args.no_track:
+    mlflow.set_tracking_uri('/home/bsucm/NQ/mlruns')
+    mlflow.start_run(run_name=run_name)
 
-mlflow.log_param('gpu', gpu)
-mlflow.log_param('model', args.model)
-mlflow.log_param('data', args.data)
+    mlflow.log_param('gpu', gpu)
+    mlflow.log_param('model', args.model)
+    mlflow.log_param('data', args.data)
 
 # Loading model
 curr_model = model.mk_model()
@@ -89,7 +92,8 @@ if gpu:
 else:
     result = curr_model.predict_generator(ds,verbose=1)
 
-mlflow.log_metric('prediction_time', time.time()- start)
+if not args.no_track:
+    mlflow.log_metric('prediction_time', time.time()- start)
 
 np.savez_compressed(args.outdir + run_name + '-output' + '.npz',
                     **dict(zip(['uniqe_id','start_logits','end_logits','answer_type_logits'],
@@ -136,9 +140,10 @@ nq_eval_command = f'python3 {NQ_EVAL} --gold_path {args.data} --predictions_path
 eval_results = subprocess.check_output(nq_eval_command, shell=True, stderr=subprocess.STDOUT)
 eval_results = json.loads(re.sub('>=', '-noless-', re.findall('\{.*\}', eval_results.decode('utf-8'))[0]))
 
-mlflow.log_metrics(eval_results)
-mlflow.log_artifact(prediction_name)
-mlflow.end_run()
+if not args.no_track:
+    mlflow.log_metrics(eval_results)
+    mlflow.log_artifact(prediction_name)
+    mlflow.end_run()
 
 print(eval_results)
 
