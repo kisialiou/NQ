@@ -316,7 +316,7 @@ class BertModel(tf.keras.layers.Layer):
   ```
   """
 
-  def __init__(self, config, float_type=tf.float16, **kwargs):
+  def __init__(self, config, float_type=tf.float32, **kwargs):
     super(BertModel, self).__init__(**kwargs)
     self.config = (
         BertConfig.from_dict(config)

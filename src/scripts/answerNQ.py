@@ -11,7 +11,6 @@ import re
 
 import mlflow
 import time
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 sys.path.append('/home/bsucm/NQ/')
 
@@ -58,13 +57,6 @@ mlflow.start_run(run_name=run_name)
 mlflow.log_param('gpu', gpu)
 mlflow.log_param('model', args.model)
 mlflow.log_param('data', args.data)
-
-# #Setting half precision
-policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
-mixed_precision.set_policy(policy)
-
-print('Compute dtype: %s' % policy.compute_dtype)
-print('Variable dtype: %s' % policy.variable_dtype)
 
 # Loading model
 curr_model = model.mk_model()
