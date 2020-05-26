@@ -1,0 +1,15 @@
+artifact_uri: file:///home/bsucm/NQ/mlruns/0/42ae4c9f94074d5599381e165e5c6f4c/artifacts
+end_time: 1590239827680
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 42ae4c9f94074d5599381e165e5c6f4c
+run_uuid: 42ae4c9f94074d5599381e165e5c6f4c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1590225645177
+status: 3
+tags: []
+user_id: bsucm
