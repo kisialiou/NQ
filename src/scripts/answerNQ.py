@@ -88,9 +88,9 @@ ds = decoded_ds.batch(batch_size=32, drop_remainder=False)
 start = time.time()
 if gpu:
     with tf.device('/GPU:0',):
-        result = curr_model.predict_generator(ds,verbose=1)
+        result = curr_model.predict(ds,verbose=1)
 else:
-    result = curr_model.predict_generator(ds,verbose=1)
+    result = curr_model.predict(ds,verbose=1)
 
 if not args.no_track:
     mlflow.log_metric('prediction_time', time.time()- start)
